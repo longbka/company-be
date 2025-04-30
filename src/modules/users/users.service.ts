@@ -6,7 +6,11 @@ import { User } from './schema/user.schema';
 import mongoose, { Model } from 'mongoose';
 import { hashPasswordUtil } from '@/helpers/utils';
 import aqp from 'api-query-params';
-import { CreateAuthDto } from '@/auth/dto/create-auth.dto';
+import {
+  ChangePasswordAuthDto,
+  CodeAuthDto,
+  CreateAuthDto,
+} from '@/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import * as dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -95,7 +99,7 @@ export class UsersService {
   }
 
   async register(registerDto: CreateAuthDto) {
-    const { name, email, password } = registerDto;
+    const { name, email, password, phone, address } = registerDto;
 
     //check if email already exists
     const emailExists = await this.isEmailExist(email);
@@ -111,6 +115,8 @@ export class UsersService {
     const user = await this.userModel.create({
       name,
       email,
+      phone,
+      address,
       password: hashedPassword,
       isActive: false,
       codeId,
@@ -142,5 +148,127 @@ export class UsersService {
     return {
       _id: user._id,
     };
+  }
+
+  async handleActive(data: CodeAuthDto) {
+    const user = await this.userModel.findOne({
+      _id: data._id,
+      codeId: data.code,
+    });
+    if (!user) {
+      throw new BadRequestException('Mã code không hợp lệ');
+    }
+    //check expire code
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCheck) {
+      await this.userModel.updateOne(
+        { _id: data._id },
+        {
+          isActive: true,
+        },
+      );
+      return { isBeforeCheck };
+    } else {
+      throw new BadRequestException('Mã code đã hết hạn');
+    }
+  }
+
+  async handleRetryActive(email: string) {
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
+    if (user.isActive == 'true') {
+      throw new BadRequestException('Tài khoản đã được kích hoạt');
+    }
+
+    // send email
+    const codeId = uuidv4();
+    await user.updateOne({
+      codeId,
+      codeExpired: dayjs().add(15, 'minute'),
+    });
+
+    this.mailerService
+      .sendMail({
+        to: user.email,
+        subject: 'Kích hoạt tài khoản của bạn',
+        text: 'Welcome',
+        template: 'register',
+        context: {
+          logoUrl: 'https://lotustse.vn/uploads/sdfsa.png',
+          name: user?.name ?? user?.email,
+          activationCode: codeId,
+          expireMinutes: 15,
+          companyName: 'Lotus TSE',
+          year: new Date().getFullYear(),
+        },
+      })
+      .then((data) => {
+        console.log('Email sent successfully', data);
+      })
+      .catch((e) => {
+        console.log('Error occurred while sending email', e);
+      });
+
+    return { id: user._id };
+  }
+
+  async handleRetryPassword(email: string) {
+    const user = await this.userModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
+
+    // send email
+    const codeId = uuidv4();
+    await user.updateOne({
+      codeId,
+      codeExpired: dayjs().add(15, 'minute'),
+    });
+
+    this.mailerService
+      .sendMail({
+        to: user.email,
+        subject: 'Thay đổi mật khẩu',
+        text: 'Welcome',
+        template: 'register',
+        context: {
+          logoUrl: 'https://lotustse.vn/uploads/sdfsa.png',
+          name: user?.name ?? user?.email,
+          activationCode: codeId,
+          expireMinutes: 15,
+          companyName: 'Lotus TSE',
+          year: new Date().getFullYear(),
+        },
+      })
+      .then((data) => {
+        console.log('Email sent successfully', data);
+      })
+      .catch((e) => {
+        console.log('Error occurred while sending email', e);
+      });
+
+    return { id: user._id, email: user.email };
+  }
+
+  async handleChangePassword(data: ChangePasswordAuthDto) {
+    if (data.confirmPassword !== data.password) {
+      throw new BadRequestException('Mật khẩu không trùng nhau');
+    }
+
+    const user = await this.userModel.findOne({ email: data.email });
+    if (!user) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
+    //check expire code
+    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCheck) {
+      const newPassword = await hashPasswordUtil(data.password);
+      await user.updateOne({ password: newPassword });
+      return { isBeforeCheck };
+    } else {
+      throw new BadRequestException('Mã code không hợp lệ hoặc hết hạn');
+    }
   }
 }

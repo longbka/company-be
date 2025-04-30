@@ -10,7 +10,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
+import { ChangePasswordAuthDto, CodeAuthDto, CreateAuthDto } from './dto/create-auth.dto';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { JwtAuthGuard } from './passport/jwt-auth.guard';
 import { Public, ResponseMessage } from '../decorator/customize';
@@ -43,6 +43,12 @@ export class AuthController {
     return this.authService.register(createAuthDto);
   }
 
+  @Post('check-code')
+  @Public()
+  checkCode(@Body() codeAuthDto: CodeAuthDto) {
+    return this.authService.checkCode(codeAuthDto);
+  }
+
   @Post('mail')
   @Public()
   testMail() {
@@ -59,7 +65,7 @@ export class AuthController {
           message: 'Welcome to our service',
           buttonText: 'Click here to verify your email',
           companyName: 'Lotus Tse',
-          year: new Date().getFullYear()
+          year: new Date().getFullYear(),
         },
       })
       .then((data) => {
@@ -69,5 +75,23 @@ export class AuthController {
         console.log('Error occurred while sending email', e);
       });
     return 'ok';
+  }
+
+  @Post('retry-active')
+  @Public()
+  retryActive(@Body('email') email: string) {
+    return this.authService.retryActive(email);
+  }
+
+  @Post('retry-password')
+  @Public()
+  retryPassword(@Body('email') email: string) {
+    return this.authService.retryPassword(email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  changePassword(@Body() data: any) {
+    return this.authService.changePassword(data);
   }
 }
