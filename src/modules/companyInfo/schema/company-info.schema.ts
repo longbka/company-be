@@ -9,7 +9,7 @@ export class CompanyInfo {
   name: string;
 
   @Prop()
-  shortName: string;
+  short_name: string;
 
   @Prop()
   slogan: string;
@@ -24,10 +24,13 @@ export class CompanyInfo {
   vision: string;
 
   @Prop()
+  organizational_structure: string;
+
+  @Prop()
   establishYear: number;
 
   @Prop()
-  licenseNumber: string;
+  license_number: string;
 
   @Prop()
   address: string;

@@ -11,6 +11,11 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { TransformInterceptor } from './core/transform.interceptor';
 
+import { ProductsModule } from '@/modules/products/products.module';
+import { ProjectsModule } from '@/modules/projects/projects.module';
+import { OfferingsModule } from '@/modules/offerings/offerings.module';
+import { CompanyInfoModule } from './modules/companyInfo/company-info.module';
+
 @Module({
   imports: [
     UsersModule,
@@ -19,7 +24,7 @@ import { TransformInterceptor } from './core/transform.interceptor';
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
       }),
     }),
@@ -27,7 +32,7 @@ import { TransformInterceptor } from './core/transform.interceptor';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: async (configService: ConfigService) => ({
+      useFactory: (configService: ConfigService) => ({
         transport: {
           host: 'smtp.gmail.com',
           port: 465,
@@ -51,6 +56,14 @@ import { TransformInterceptor } from './core/transform.interceptor';
         },
       }),
     }),
+
+    ProjectsModule,
+
+    OfferingsModule,
+
+    ProductsModule,
+
+    CompanyInfoModule,
   ],
   controllers: [AppController],
   providers: [

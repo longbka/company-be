@@ -1,12 +1,15 @@
+/* eslint-disable */
 import { BadRequestException } from '@nestjs/common';
 
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
-export const hashPasswordUtil = async (plainPassword: string) => {
+export const hashPasswordUtil = async (
+  plainPassword: string,
+): Promise<string> => {
   try {
     return await bcrypt.hash(plainPassword, saltRounds);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error hashing password:', error);
     throw new Error('Error hashing password');
   }
@@ -15,7 +18,7 @@ export const hashPasswordUtil = async (plainPassword: string) => {
 export const comparePasswordUtil = async (
   plainPassword: string,
   hashedPassword: string,
-) => {
+): Promise<string> => {
   try {
     return await bcrypt.compare(plainPassword, hashedPassword);
   } catch (error) {

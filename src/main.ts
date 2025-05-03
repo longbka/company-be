@@ -6,7 +6,7 @@ import { ValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
-  const port = configService.get('PORT');
+  const port: string | undefined = configService.get('PORT');
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -22,7 +22,11 @@ async function bootstrap() {
     preflightContinue: false,
     credentials: true,
   });
-  
+
   await app.listen(port ?? 8080);
 }
-bootstrap();
+
+bootstrap().catch((err) => {
+  console.error('Error during app bootstrap:', err);
+  process.exit(1);
+});

@@ -1,8 +1,14 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UsersService } from '@/modules/users/users.service';
 import { comparePasswordUtil } from '@/helpers/utils';
 import { JwtService } from '@nestjs/jwt';
-import { ChangePasswordAuthDto, CodeAuthDto, CreateAuthDto } from './dto/create-auth.dto';
+import {
+  ChangePasswordAuthDto,
+  CodeAuthDto,
+  CreateAuthDto,
+} from './dto/create-auth.dto';
+import { User } from '@/modules/users/schema/user.schema';
+import { Types } from 'mongoose';
 
 @Injectable()
 export class AuthService {
@@ -11,7 +17,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(username: string, password: string): Promise<any> {
+  async validateUser(username: string, password: string): Promise<User | null> {
     const user = await this.usersService.findByEmail(username);
     if (!user) return null;
     const isValidPassWord = await comparePasswordUtil(password, user.password);
@@ -19,8 +25,8 @@ export class AuthService {
     return user;
   }
 
-  async login(user: any) {
-    const payload = { username: user.email, sub: user._id };
+  login(user: User & { _id: Types.ObjectId }) {
+    const payload = { username: user.email, sub: user._id, role: user.role };
     return {
       user: {
         email: user.email,

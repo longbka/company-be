@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { CompanyInfoService } from './company-info.service';
-import { CompanyInfoController } from './company-info.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CompanyInfo, CompanyInfoSchema } from './schema/company-info.schema';
+import { CompanyInfoController } from './company-info.controller';
+import { CompanyInfoService } from './company-info.service';
 
 @Module({
   imports: [
@@ -13,4 +13,4 @@ import { CompanyInfo, CompanyInfoSchema } from './schema/company-info.schema';
   controllers: [CompanyInfoController],
   providers: [CompanyInfoService],
 })
-export class UsersModule {}
+export class CompanyInfoModule {}

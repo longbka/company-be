@@ -1,3 +1,4 @@
+/* eslint-disable */
 import { RESPONSE_MESSAGE } from '@/decorator/customize';
 import {
   Injectable,
@@ -8,10 +9,11 @@ import {
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+
 export interface Response<T> {
   statusCode: number;
   message?: string;
-  data: any;
+  data: T;
 }
 @Injectable()
 export class TransformInterceptor<T>

@@ -70,7 +70,7 @@ export class UsersService {
       .limit(pageSize)
       .skip(skip)
       .select('-password')
-      .sort(sort as any);
+      .sort(sort as Record<string, 1 | -1>);
     return { results, totalPages };
   }
 
@@ -151,25 +151,29 @@ export class UsersService {
   }
 
   async handleActive(data: CodeAuthDto) {
-    const user = await this.userModel.findOne({
-      _id: data._id,
-      codeId: data.code,
-    });
-    if (!user) {
-      throw new BadRequestException('Mã code không hợp lệ');
-    }
-    //check expire code
-    const isBeforeCheck = dayjs().isBefore(user.codeExpired);
-    if (isBeforeCheck) {
-      await this.userModel.updateOne(
-        { _id: data._id },
-        {
-          isActive: true,
-        },
-      );
-      return { isBeforeCheck };
-    } else {
-      throw new BadRequestException('Mã code đã hết hạn');
+    try {
+      const user = await this.userModel.findOne({
+        _id: data._id,
+        codeId: data.code,
+      });
+      if (!user) {
+        throw new BadRequestException('Mã code không hợp lệ');
+      }
+      //check expire code
+      const isBeforeCheck = dayjs().isBefore(user.codeExpired);
+      if (isBeforeCheck) {
+        await this.userModel.updateOne(
+          { _id: data._id },
+          {
+            isActive: true,
+          },
+        );
+        return { isBeforeCheck };
+      } else {
+        throw new BadRequestException('Mã code đã hết hạn');
+      }
+    } catch (error) {
+      throw new BadRequestException(error);
     }
   }
 
@@ -265,8 +269,11 @@ export class UsersService {
     const isBeforeCheck = dayjs().isBefore(user.codeExpired);
     if (isBeforeCheck) {
       const newPassword = await hashPasswordUtil(data.password);
-      await user.updateOne({ password: newPassword });
-      return { isBeforeCheck };
+      if (newPassword) {
+        await user.updateOne({ password: newPassword });
+        return { isBeforeCheck };
+      }
+      throw new BadRequestException('Error');
     } else {
       throw new BadRequestException('Mã code không hợp lệ hoặc hết hạn');
     }

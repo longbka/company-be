@@ -3,18 +3,21 @@ import {
   Get,
   Post,
   Body,
-  Patch,
-  Param,
-  Delete,
   UseGuards,
   Request,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { ChangePasswordAuthDto, CodeAuthDto, CreateAuthDto } from './dto/create-auth.dto';
+import {
+  ChangePasswordAuthDto,
+  CodeAuthDto,
+  CreateAuthDto,
+} from './dto/create-auth.dto';
 import { LocalAuthGuard } from './passport/local-auth.guard';
 import { JwtAuthGuard } from './passport/jwt-auth.guard';
 import { Public, ResponseMessage } from '../decorator/customize';
 import { MailerService } from '@nestjs-modules/mailer';
+import { User } from '@/modules/users/schema/user.schema';
+import { Types } from 'mongoose';
 
 @Controller('auth')
 export class AuthController {
@@ -27,13 +30,15 @@ export class AuthController {
   @Public()
   @UseGuards(LocalAuthGuard)
   @ResponseMessage('Fetch Login')
-  handleLogin(@Request() req: any) {
+  handleLogin(
+    @Request() req: Request & { user: User & { _id: Types.ObjectId } },
+  ) {
     return this.authService.login(req.user);
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req: any) {
+  getProfile(@Request() req: Request & { user: User }) {
     return req.user;
   }
 
@@ -91,7 +96,7 @@ export class AuthController {
 
   @Post('reset-password')
   @Public()
-  changePassword(@Body() data: any) {
+  changePassword(@Body() data: ChangePasswordAuthDto) {
     return this.authService.changePassword(data);
   }
 }
